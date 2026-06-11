@@ -61,27 +61,27 @@ button{width:145px;height:62px;margin:9px;border:none;border-radius:18px;font-si
 
 .fanOverlay{
   position:absolute;
-  width:38px;
-  height:38px;
+  width:52px;
+  height:52px;
   border-radius:50%;
   pointer-events:none;
 }
 
 .frontFan{
-  left:63px;
-  top:72px;
+  left:57px;
+  top:78px;
 }
 
 .blade{
   position:absolute;
-  width:8px;
-  height:24px;
-  background:#e5e7eb;
-  border-radius:10px;
-  left:15px;
+  width:10px;
+  height:28px;
+  background:white;
+  border-radius:20px;
+  left:21px;
   top:1px;
-  transform-origin:4px 19px;
-  opacity:.9;
+  transform-origin:5px 25px;
+  opacity:.95;
 }
 
 .b1{transform:rotate(0deg)}
@@ -90,16 +90,16 @@ button{width:145px;height:62px;margin:9px;border:none;border-radius:18px;font-si
 
 .center{
   position:absolute;
-  width:12px;
-  height:12px;
+  width:16px;
+  height:16px;
   background:#c9a45c;
   border-radius:50%;
-  left:13px;
-  top:13px;
+  left:18px;
+  top:18px;
   box-shadow:0 0 5px #000;
 }
 
-.spinFan{animation:rot .22s linear infinite}
+.spinFan{animation:rot .20s linear infinite}
 .offFan{filter:grayscale(1);opacity:.45}
 @keyframes rot{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 
@@ -124,20 +124,13 @@ button{width:145px;height:62px;margin:9px;border:none;border-radius:18px;font-si
   border:2px solid #111827;
 }
 
-.green{
-  background:#22c55e;
-  box-shadow:0 0 18px #22c55e;
-}
-
-.red{
-  background:#ef4444;
-  box-shadow:0 0 18px #ef4444;
-}
+.green{background:#22c55e;box-shadow:0 0 18px #22c55e}
+.red{background:#ef4444;box-shadow:0 0 18px #ef4444}
 
 @media(max-width:450px){
   .motorBox{width:145px;height:150px}
   .motorImg{height:108px}
-  .frontFan{left:53px;top:66px}
+  .frontFan{left:49px;top:72px;width:48px;height:48px}
 }
 </style>
 </head>
@@ -231,21 +224,12 @@ onValue(ref(db, "motor"), (snapshot) => {
 
   const temp = Number(d.temperature ?? 0);
   const limit = Number(d.limit ?? 70);
+  const motor = Boolean(d.motorState || d.plcMotorRunning);
+  const emergency = Boolean(d.emergencyState || d.plcEmergencyActive);
+  const tempHigh = temp >= limit;
+  const alarm = Boolean(d.emergencyState || d.plcEmergencyActive || d.plcAlarmActive || tempHigh);
 
-  const motor =
-    Boolean(d.motorState || d.plcMotorRunning);
-
-  const emergency =
-    Boolean(d.emergencyState || d.plcEmergencyActive);
-
-  const tempHigh =
-    temp >= limit;
-
-  const alarm =
-    Boolean(d.emergencyState || d.plcEmergencyActive || d.plcAlarmActive || tempHigh);
-
-  document.getElementById("temp").innerHTML =
-    temp.toFixed(1) + " °C";
+  document.getElementById("temp").innerHTML = temp.toFixed(1) + " °C";
 
   let input = document.getElementById("limitInput");
   if(document.activeElement !== input){
