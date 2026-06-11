@@ -53,13 +53,15 @@ button{width:145px;height:62px;margin:9px;border:none;border-radius:18px;font-si
   <input id="limitInput" type="number" step="1">
   <button class="setbtn" onclick="setLimit()">SET</button>
 
-  <div id="alertBox" class="alert">EMERGENCY HIGH TEMPERATURE</div>
+  <div id="alertBox" class="alert">SYSTEM ALARM</div>
   <div id="warnIcon" class="warnIcon">⚠️</div>
 </div>
 
 <div class="card">
   <div class="status">Motor: <span id="motor">--</span></div>
   <div class="status">Emergency: <span id="emergency">--</span></div>
+  <div class="status">PLC Emergency: <span id="plcEmergency">--</span></div>
+  <div class="status">PLC Alarm: <span id="plcAlarm">--</span></div>
 
   <div class="motorBody">
     <div id="fan" class="fan offFan">
@@ -111,23 +113,67 @@ onValue(ref(db, "motor"), (snapshot) => {
   const d = snapshot.val();
   if(!d) return;
 
-  document.getElementById("temp").innerHTML = d.temperature + " °C";
+  document.getElementById("temp").innerHTML =
+    (d.temperature ?? "--") + " °C";
 
   let input = document.getElementById("limitInput");
   if(document.activeElement !== input){
-    input.value = d.limit;
+    input.value = d.limit ?? "";
   }
 
-  document.getElementById("motor").innerHTML = d.motorState ? "ON" : "OFF";
-  document.getElementById("motor").className = d.motorState ? "ok" : "danger";
+  const motor =
+    d.motorState ||
+    d.plcMotorRunning;
 
-  document.getElementById("emergency").innerHTML = d.emergencyState ? "ACTIVE" : "NORMAL";
-  document.getElementById("emergency").className = d.emergencyState ? "danger" : "ok";
+  const emergency =
+    d.emergencyState ||
+    d.plcEmergencyActive;
 
-  document.getElementById("fan").className = d.motorState ? "fan spinFan" : "fan offFan";
+  const alarm =
+    d.emergencyState ||
+    d.plcEmergencyActive ||
+    d.plcAlarmActive;
 
-  document.getElementById("alertBox").style.display = d.emergencyState ? "block" : "none";
-  document.getElementById("warnIcon").style.display = d.emergencyState ? "block" : "none";
+  document.getElementById("motor").innerHTML =
+    motor ? "ON" : "OFF";
+  document.getElementById("motor").className =
+    motor ? "ok" : "danger";
+
+  document.getElementById("emergency").innerHTML =
+    emergency ? "ACTIVE" : "NORMAL";
+  document.getElementById("emergency").className =
+    emergency ? "danger" : "ok";
+
+  document.getElementById("plcEmergency").innerHTML =
+    d.plcEmergencyActive ? "ACTIVE" : "NORMAL";
+  document.getElementById("plcEmergency").className =
+    d.plcEmergencyActive ? "danger" : "ok";
+
+  document.getElementById("plcAlarm").innerHTML =
+    d.plcAlarmActive ? "ACTIVE" : "NORMAL";
+  document.getElementById("plcAlarm").className =
+    d.plcAlarmActive ? "danger" : "ok";
+
+  document.getElementById("fan").className =
+    motor ? "fan spinFan" : "fan offFan";
+
+  document.getElementById("alertBox").style.display =
+    alarm ? "block" : "none";
+  document.getElementById("warnIcon").style.display =
+    alarm ? "block" : "none";
+
+  if(d.plcEmergencyActive){
+    document.getElementById("alertBox").innerHTML =
+      "PLC EMERGENCY ACTIVE";
+  }
+  else if(d.plcAlarmActive){
+    document.getElementById("alertBox").innerHTML =
+      "PLC ALARM ACTIVE";
+  }
+  else if(d.emergencyState){
+    document.getElementById("alertBox").innerHTML =
+      "HIGH TEMPERATURE / SYSTEM EMERGENCY";
+  }
 });
 </script>
 
