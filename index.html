@@ -9,79 +9,226 @@
 body{
   margin:0;
   font-family:Arial;
-  background:#0f172a;
+  background:linear-gradient(135deg,#020617,#111827);
   color:white;
-  text-align:center;
+  text-align:center
 }
+
 .container{
-  max-width:520px;
+  max-width:620px;
   margin:auto;
-  padding:15px;
+  padding:10px
 }
+
 .card{
-  background:#1e293b;
-  margin:15px 0;
-  padding:20px;
-  border-radius:20px;
-  box-shadow:0 0 15px #0008;
+  margin:16px 10px;
+  padding:22px;
+  border-radius:24px;
+  background:#1f2937;
+  box-shadow:0 0 18px #0009
 }
+
+.temp{
+  font-size:64px;
+  font-weight:bold;
+  color:#38bdf8
+}
+
+input{
+  padding:14px;
+  font-size:28px;
+  width:170px;
+  height:48px;
+  text-align:center;
+  border-radius:15px;
+  border:none;
+  font-weight:bold
+}
+
 button{
   width:145px;
-  height:60px;
-  margin:8px;
+  height:62px;
+  margin:9px;
   border:none;
-  border-radius:16px;
-  font-size:21px;
+  border-radius:18px;
+  font-size:22px;
   font-weight:bold;
-  color:white;
+  color:white
 }
+
 .start{background:#22c55e}
 .stop{background:#ef4444}
 .reset{background:#3b82f6}
 .emergency{background:#7f1d1d}
-
-.motorState{
-  font-size:42px;
-  font-weight:bold;
-  margin-top:10px;
-}
-.on{color:#22c55e}
-.off{color:#ef4444}
+.setbtn{background:#a855f7;height:72px}
 
 .alert{
   display:none;
-  background:#7f1d1d;
-  border:2px solid #ef4444;
-  padding:15px;
-  border-radius:15px;
   margin-top:15px;
-  font-size:22px;
+  padding:20px;
+  border-radius:18px;
+  background:#7f1d1d;
+  font-size:24px;
   font-weight:bold;
+  border:3px solid #ef4444
+}
+
+.warnIcon{
+  display:none;
+  font-size:60px;
+  margin-top:12px;
+  animation:blink .6s infinite
+}
+
+@keyframes blink{
+  0%{opacity:1;transform:scale(1)}
+  50%{opacity:.15;transform:scale(1.25)}
+  100%{opacity:1;transform:scale(1)}
+}
+
+.monitor{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:12px;
+  background:#000;
+  border:2px solid #222;
+  border-radius:18px;
+  padding:15px;
+  margin:10px auto;
+  width:fit-content
+}
+
+.motorBox{
+  position:relative;
+  width:165px;
+  height:165px;
+  background:#000;
+  border-radius:14px;
+  overflow:hidden
+}
+
+.motorImg{
+  width:100%;
+  height:145px;
+  display:block;
+  border-radius:10px;
+  object-fit:contain
+}
+
+.fanOverlay{
+  position:absolute;
+  width:52px;
+  height:52px;
+  border-radius:50%;
+  pointer-events:none
+}
+
+.frontFan{
+  left:56px;
+  top:61px
+}
+
+.blade{
+  position:absolute;
+  width:10px;
+  height:28px;
+  background:white;
+  border-radius:20px;
+  left:21px;
+  top:1px;
+  transform-origin:5px 25px;
+  opacity:.95
+}
+
+.b1{transform:rotate(0deg)}
+.b2{transform:rotate(120deg)}
+.b3{transform:rotate(240deg)}
+
+.center{
+  position:absolute;
+  width:16px;
+  height:16px;
+  background:#c9a45c;
+  border-radius:50%;
+  left:18px;
+  top:18px;
+  box-shadow:0 0 5px #000
+}
+
+.spinFan{animation:rot .20s linear infinite}
+.offFan{filter:grayscale(1);opacity:.45}
+
+@keyframes rot{
+  from{transform:rotate(0deg)}
+  to{transform:rotate(360deg)}
+}
+
+.lampPanel{
+  display:grid;
+  grid-template-columns:1fr 48px;
+  gap:14px;
+  max-width:360px;
+  margin:22px auto 0;
+  font-size:22px;
+  align-items:center;
+  text-align:left
+}
+
+.lamp{
+  width:32px;
+  height:32px;
+  border-radius:50%;
+  margin:auto;
+  background:#4b5563;
+  box-shadow:inset 0 0 8px #000;
+  border:2px solid #111827
+}
+
+.green{
+  background:#22c55e;
+  box-shadow:0 0 18px #22c55e
+}
+
+.red{
+  background:#ef4444;
+  box-shadow:0 0 18px #ef4444
 }
 
 .logBox{
   text-align:left;
-  background:#0f172a;
-  border-radius:14px;
-  padding:10px;
-  max-height:320px;
+  max-height:300px;
   overflow:auto;
+  background:#111827;
+  border-radius:14px;
+  padding:10px
 }
+
 .logItem{
-  border-bottom:1px solid #334155;
-  padding:12px;
+  padding:10px;
+  border-bottom:1px solid #374151;
   font-size:15px;
+  line-height:1.5
 }
+
 .logType{
   color:#ef4444;
   font-weight:bold;
-  font-size:17px;
+  font-size:17px
 }
+
 .clearBtn{
-  background:#64748b;
-  width:170px;
+  background:#6b7280;
+  width:180px;
   height:48px;
-  font-size:17px;
+  font-size:18px
+}
+
+@media(max-width:450px){
+  .motorBox{width:145px;height:150px}
+  .motorImg{height:130px}
+  .frontFan{left:50px;top:62px;width:48px;height:48px}
+  .monitor{gap:8px;padding:10px}
 }
 </style>
 </head>
@@ -91,15 +238,50 @@ button{
 <div class="container">
 
 <h1>ESP32 Motor Control</h1>
+<p>Global Firebase Web Panel</p>
 
 <div class="card">
-  <h2>Motor State</h2>
-  <div id="motorState" class="motorState off">OFF</div>
-  <div id="alertBox" class="alert">EMERGENCY ACTIVE</div>
+  <div>Temperature</div>
+  <div id="temp" class="temp">-- °C</div>
+  <br>
+
+  <span>Max Temp:</span><br><br>
+  <input id="limitInput" type="number" step="1">
+  <button class="setbtn" onclick="setLimit()">SET</button>
+
+  <div id="alertBox" class="alert">SYSTEM ALARM</div>
+  <div id="warnIcon" class="warnIcon">⚠️</div>
 </div>
 
 <div class="card">
-  <h2>Control</h2>
+  <h2>MONITORING</h2>
+
+  <div class="monitor">
+    <div class="motorBox">
+      <img class="motorImg" src="motor_front.jpg">
+
+      <div id="fanFront" class="fanOverlay frontFan offFan">
+        <div class="blade b1"></div>
+        <div class="blade b2"></div>
+        <div class="blade b3"></div>
+        <div class="center"></div>
+      </div>
+    </div>
+
+    <div class="motorBox">
+      <img class="motorImg" src="motor_side.png">
+    </div>
+  </div>
+
+  <div class="lampPanel">
+    <div>RUN</div><div id="runLamp" class="lamp"></div>
+    <div>EMERGENCY</div><div id="emgLamp" class="lamp"></div>
+    <div>ALARM / HIGH TEMP</div><div id="alarmLamp" class="lamp"></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>CONTROL</h2>
   <button class="start" onclick="sendCommand('start')">START</button>
   <button class="stop" onclick="sendCommand('stop')">STOP</button>
   <button class="reset" onclick="sendCommand('reset')">RESET</button>
@@ -137,6 +319,16 @@ window.sendCommand = function(cmd){
   set(ref(db, "motor/command"), cmd);
 };
 
+window.setLimit = function(){
+  let v = Number(document.getElementById("limitInput").value);
+
+  if(v > 0 && v < 150){
+    set(ref(db, "motor/limit"), v);
+  }else{
+    alert("Enter temperature between 1 and 149");
+  }
+};
+
 window.clearLogs = function(){
   if(confirm("Delete all emergency logs?")){
     remove(ref(db, "motor/logs"));
@@ -147,27 +339,50 @@ onValue(ref(db, "motor"), (snapshot) => {
   const d = snapshot.val();
   if(!d) return;
 
-  const motorRunning = Boolean(d.motorState || d.plcMotorRunning);
-  const emergency = Boolean(d.emergencyState || d.plcEmergencyActive);
+  const temp = Number(d.temperature ?? 0);
+  const limit = Number(d.limit ?? 70);
 
-  const motorDiv = document.getElementById("motorState");
+  const motor = Boolean(d.motorState || d.plcMotorRunning || d.finalRun);
+  const emergency = Boolean(d.emergencyState || d.plcEmergencyActive || d.finalEmergency);
+  const tempHigh = Boolean(d.highTemperature || temp >= limit);
+  const alarm = Boolean(emergency || d.plcAlarmActive || tempHigh);
 
-  if(motorRunning){
-    motorDiv.innerHTML = "ON";
-    motorDiv.className = "motorState on";
-  }else{
-    motorDiv.innerHTML = "OFF";
-    motorDiv.className = "motorState off";
+  document.getElementById("temp").innerHTML = temp.toFixed(1) + " °C";
+
+  let input = document.getElementById("limitInput");
+  if(document.activeElement !== input){
+    input.value = limit;
   }
 
+  document.getElementById("fanFront").className =
+    motor ? "fanOverlay frontFan spinFan" : "fanOverlay frontFan offFan";
+
+  document.getElementById("runLamp").className =
+    motor ? "lamp green" : "lamp";
+
+  document.getElementById("emgLamp").className =
+    emergency ? "lamp red" : "lamp";
+
+  document.getElementById("alarmLamp").className =
+    alarm ? "lamp red" : "lamp";
+
   document.getElementById("alertBox").style.display =
-    emergency ? "block" : "none";
+    alarm ? "block" : "none";
+
+  document.getElementById("warnIcon").style.display =
+    alarm ? "block" : "none";
 
   if(d.plcEmergencyActive){
     document.getElementById("alertBox").innerHTML = "PLC EMERGENCY ACTIVE";
   }
   else if(d.emergencyState){
     document.getElementById("alertBox").innerHTML = "WEB / ESP32 EMERGENCY";
+  }
+  else if(d.plcAlarmActive){
+    document.getElementById("alertBox").innerHTML = "PLC ALARM ACTIVE";
+  }
+  else if(tempHigh){
+    document.getElementById("alertBox").innerHTML = "HIGH TEMPERATURE";
   }
 });
 
@@ -189,24 +404,27 @@ onValue(ref(db, "motor/logs"), (snapshot) => {
   counter.innerHTML = "Total Events: " + arr.length;
 
   box.innerHTML = arr.map(e => {
-    let durationText = "--";
+    let reason = e.reason || e.message || e.type || "--";
+    let source = e.source || "--";
+    let duration = "--";
 
     if(e.durationSec !== undefined){
-      durationText = e.durationSec + " seconds";
+      duration = e.durationSec + " sec";
     }
     else if(e.duration !== undefined){
-      durationText = e.duration;
+      duration = e.duration;
     }
 
     return `
       <div class="logItem">
         <div class="logType">${e.type || "EMERGENCY"}</div>
-        Reason: ${e.message || e.reason || e.type || "--"}<br>
-        Source: ${e.source || "--"}<br>
+        Reason: ${reason}<br>
+        Source: ${source}<br>
         Date: ${e.date || "--"}<br>
         Time: ${e.time || "--"}<br>
-        Duration: ${durationText}<br>
-        Temperature: ${e.temperature ?? "--"} °C
+        Duration: ${duration}<br>
+        Temperature: ${e.temperature ?? "--"} °C<br>
+        Limit: ${e.limit ?? "--"} °C
       </div>
     `;
   }).join("");
