@@ -3,13 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ESP32 Motor Control</title>
+
+<title>SIS Control | Smart Industrial Supervision</title>
+<link rel="icon" type="image/png" href="sis_logo.png">
 
 <style>
 body{
   margin:0;
-  font-family:Arial;
-  background:linear-gradient(135deg,#020617,#111827);
+  font-family:Arial, sans-serif;
+  background:linear-gradient(135deg,#020617,#0f172a,#111827);
   color:white;
   text-align:center;
 }
@@ -20,12 +22,58 @@ body{
   padding:10px;
 }
 
+.header{
+  margin:18px 10px;
+  padding:22px;
+  border-radius:26px;
+  background:linear-gradient(180deg,#ffffff,#e5e7eb);
+  color:#0f172a;
+  box-shadow:0 0 22px #0009;
+}
+
+.logo{
+  width:210px;
+  max-width:80%;
+  border-radius:22px;
+  margin-bottom:10px;
+}
+
+.projectTitle{
+  font-size:36px;
+  font-weight:900;
+  letter-spacing:2px;
+  color:#082f49;
+  margin:8px 0 0;
+}
+
+.projectSub{
+  font-size:20px;
+  color:#0284c7;
+  letter-spacing:5px;
+  font-weight:bold;
+  margin-top:4px;
+}
+
+.slogan{
+  font-size:14px;
+  color:#475569;
+  margin-top:12px;
+  letter-spacing:2px;
+  font-weight:bold;
+}
+
 .card{
   margin:16px 10px;
   padding:22px;
   border-radius:24px;
   background:#1f2937;
   box-shadow:0 0 18px #0009;
+  border:1px solid #334155;
+}
+
+.card h2{
+  color:#38bdf8;
+  letter-spacing:1px;
 }
 
 .temp{
@@ -54,6 +102,11 @@ button{
   font-size:22px;
   font-weight:bold;
   color:white;
+  box-shadow:0 5px 12px #0007;
+}
+
+button:active{
+  transform:scale(.96);
 }
 
 .start{background:#22c55e;}
@@ -224,7 +277,17 @@ button{
   font-size:18px;
 }
 
+.footer{
+  margin:20px 0 10px;
+  color:#94a3b8;
+  font-size:13px;
+  letter-spacing:1px;
+}
+
 @media(max-width:450px){
+  .projectTitle{font-size:28px;}
+  .projectSub{font-size:16px;letter-spacing:3px;}
+  .logo{width:180px;}
   .motorBox{width:145px;height:150px;}
   .motorImg{height:130px;}
   .frontFan{left:50px;top:62px;width:48px;height:48px;}
@@ -237,8 +300,12 @@ button{
 
 <div class="container">
 
-<h1>ESP32 Motor Control</h1>
-<p>Global Firebase Web Panel</p>
+<div class="header">
+  <img class="logo" src="sis_logo.png" alt="SIS Control Logo">
+  <div class="projectTitle">SIS Control</div>
+  <div class="projectSub">SMART INDUSTRIAL SUPERVISION</div>
+  <div class="slogan">MONITOR • CONTROL • PROTECT</div>
+</div>
 
 <div class="card">
   <div>Temperature</div>
@@ -294,6 +361,10 @@ button{
   <div id="logBox" class="logBox">Loading...</div>
   <br>
   <button class="clearBtn" onclick="clearLogs()">CLEAR LOGS</button>
+</div>
+
+<div class="footer">
+  SIS Control © Smart Industrial Supervision
 </div>
 
 </div>
