@@ -11,13 +11,13 @@ body{
   font-family:Arial;
   background:linear-gradient(135deg,#020617,#111827);
   color:white;
-  text-align:center
+  text-align:center;
 }
 
 .container{
   max-width:620px;
   margin:auto;
-  padding:10px
+  padding:10px;
 }
 
 .card{
@@ -25,13 +25,13 @@ body{
   padding:22px;
   border-radius:24px;
   background:#1f2937;
-  box-shadow:0 0 18px #0009
+  box-shadow:0 0 18px #0009;
 }
 
 .temp{
   font-size:64px;
   font-weight:bold;
-  color:#38bdf8
+  color:#38bdf8;
 }
 
 input{
@@ -42,7 +42,7 @@ input{
   text-align:center;
   border-radius:15px;
   border:none;
-  font-weight:bold
+  font-weight:bold;
 }
 
 button{
@@ -53,14 +53,14 @@ button{
   border-radius:18px;
   font-size:22px;
   font-weight:bold;
-  color:white
+  color:white;
 }
 
-.start{background:#22c55e}
-.stop{background:#ef4444}
-.reset{background:#3b82f6}
-.emergency{background:#7f1d1d}
-.setbtn{background:#a855f7;height:72px}
+.start{background:#22c55e;}
+.stop{background:#ef4444;}
+.reset{background:#3b82f6;}
+.emergency{background:#7f1d1d;}
+.setbtn{background:#a855f7;height:72px;}
 
 .alert{
   display:none;
@@ -70,20 +70,20 @@ button{
   background:#7f1d1d;
   font-size:24px;
   font-weight:bold;
-  border:3px solid #ef4444
+  border:3px solid #ef4444;
 }
 
 .warnIcon{
   display:none;
   font-size:60px;
   margin-top:12px;
-  animation:blink .6s infinite
+  animation:blink .6s infinite;
 }
 
 @keyframes blink{
-  0%{opacity:1;transform:scale(1)}
-  50%{opacity:.15;transform:scale(1.25)}
-  100%{opacity:1;transform:scale(1)}
+  0%{opacity:1;transform:scale(1);}
+  50%{opacity:.15;transform:scale(1.25);}
+  100%{opacity:1;transform:scale(1);}
 }
 
 .monitor{
@@ -96,7 +96,7 @@ button{
   border-radius:18px;
   padding:15px;
   margin:10px auto;
-  width:fit-content
+  width:fit-content;
 }
 
 .motorBox{
@@ -105,7 +105,7 @@ button{
   height:165px;
   background:#000;
   border-radius:14px;
-  overflow:hidden
+  overflow:hidden;
 }
 
 .motorImg{
@@ -113,7 +113,7 @@ button{
   height:145px;
   display:block;
   border-radius:10px;
-  object-fit:contain
+  object-fit:contain;
 }
 
 .fanOverlay{
@@ -121,12 +121,12 @@ button{
   width:52px;
   height:52px;
   border-radius:50%;
-  pointer-events:none
+  pointer-events:none;
 }
 
 .frontFan{
   left:56px;
-  top:61px
+  top:61px;
 }
 
 .blade{
@@ -138,12 +138,12 @@ button{
   left:21px;
   top:1px;
   transform-origin:5px 25px;
-  opacity:.95
+  opacity:.95;
 }
 
-.b1{transform:rotate(0deg)}
-.b2{transform:rotate(120deg)}
-.b3{transform:rotate(240deg)}
+.b1{transform:rotate(0deg);}
+.b2{transform:rotate(120deg);}
+.b3{transform:rotate(240deg);}
 
 .center{
   position:absolute;
@@ -153,15 +153,15 @@ button{
   border-radius:50%;
   left:18px;
   top:18px;
-  box-shadow:0 0 5px #000
+  box-shadow:0 0 5px #000;
 }
 
-.spinFan{animation:rot .20s linear infinite}
-.offFan{filter:grayscale(1);opacity:.45}
+.spinFan{animation:rot .20s linear infinite;}
+.offFan{filter:grayscale(1);opacity:.45;}
 
 @keyframes rot{
-  from{transform:rotate(0deg)}
-  to{transform:rotate(360deg)}
+  from{transform:rotate(0deg);}
+  to{transform:rotate(360deg);}
 }
 
 .lampPanel{
@@ -172,7 +172,7 @@ button{
   margin:22px auto 0;
   font-size:22px;
   align-items:center;
-  text-align:left
+  text-align:left;
 }
 
 .lamp{
@@ -182,17 +182,17 @@ button{
   margin:auto;
   background:#4b5563;
   box-shadow:inset 0 0 8px #000;
-  border:2px solid #111827
+  border:2px solid #111827;
 }
 
 .green{
   background:#22c55e;
-  box-shadow:0 0 18px #22c55e
+  box-shadow:0 0 18px #22c55e;
 }
 
 .red{
   background:#ef4444;
-  box-shadow:0 0 18px #ef4444
+  box-shadow:0 0 18px #ef4444;
 }
 
 .logBox{
@@ -201,34 +201,34 @@ button{
   overflow:auto;
   background:#111827;
   border-radius:14px;
-  padding:10px
+  padding:10px;
 }
 
 .logItem{
   padding:10px;
   border-bottom:1px solid #374151;
   font-size:15px;
-  line-height:1.5
+  line-height:1.5;
 }
 
 .logType{
   color:#ef4444;
   font-weight:bold;
-  font-size:17px
+  font-size:17px;
 }
 
 .clearBtn{
   background:#6b7280;
   width:180px;
   height:48px;
-  font-size:18px
+  font-size:18px;
 }
 
 @media(max-width:450px){
-  .motorBox{width:145px;height:150px}
-  .motorImg{height:130px}
-  .frontFan{left:50px;top:62px;width:48px;height:48px}
-  .monitor{gap:8px;padding:10px}
+  .motorBox{width:145px;height:150px;}
+  .motorImg{height:130px;}
+  .frontFan{left:50px;top:62px;width:48px;height:48px;}
+  .monitor{gap:8px;padding:10px;}
 }
 </style>
 </head>
@@ -342,10 +342,10 @@ onValue(ref(db, "motor"), (snapshot) => {
   const temp = Number(d.temperature ?? 0);
   const limit = Number(d.limit ?? 70);
 
-  const motor = Boolean(d.motorState || d.plcMotorRunning || d.finalRun);
-  const emergency = Boolean(d.emergencyState || d.plcEmergencyActive || d.finalEmergency);
+  const motor = Boolean(d.finalRun || d.motorState || d.plcMotorRunning);
+  const emergency = Boolean(d.finalEmergency || d.emergencyState || d.plcEmergencyActive);
   const tempHigh = Boolean(d.highTemperature || temp >= limit);
-  const alarm = Boolean(emergency || d.plcAlarmActive || tempHigh);
+  const alarm = Boolean(emergency || tempHigh);
 
   document.getElementById("temp").innerHTML = temp.toFixed(1) + " °C";
 
@@ -378,9 +378,6 @@ onValue(ref(db, "motor"), (snapshot) => {
   else if(d.emergencyState){
     document.getElementById("alertBox").innerHTML = "WEB / ESP32 EMERGENCY";
   }
-  else if(d.plcAlarmActive){
-    document.getElementById("alertBox").innerHTML = "PLC ALARM ACTIVE";
-  }
   else if(tempHigh){
     document.getElementById("alertBox").innerHTML = "HIGH TEMPERATURE";
   }
@@ -404,22 +401,17 @@ onValue(ref(db, "motor/logs"), (snapshot) => {
   counter.innerHTML = "Total Events: " + arr.length;
 
   box.innerHTML = arr.map(e => {
-    let reason = e.reason || e.message || e.type || "--";
-    let source = e.source || "--";
     let duration = "--";
 
     if(e.durationSec !== undefined){
       duration = e.durationSec + " sec";
     }
-    else if(e.duration !== undefined){
-      duration = e.duration;
-    }
 
     return `
       <div class="logItem">
         <div class="logType">${e.type || "EMERGENCY"}</div>
-        Reason: ${reason}<br>
-        Source: ${source}<br>
+        Reason: ${e.reason || "--"}<br>
+        Source: ${e.source || "--"}<br>
         Date: ${e.date || "--"}<br>
         Time: ${e.time || "--"}<br>
         Duration: ${duration}<br>
