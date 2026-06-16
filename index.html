@@ -648,16 +648,16 @@ onValue(ref(db, "motor"), (snapshot) => {
   const level = d.alarmLevel || d.tempAlarmLevel || "NORMAL";
   const message = d.alarmMessage || "System normal";
 
-  const yellowTh = Number(d.yellowThreshold ?? limit * 0.70);
-  const orangeTh = Number(d.orangeThreshold ?? limit * 0.85);
-  const redTh = Number(d.redThreshold ?? limit);
-
   document.getElementById("temp").innerHTML = temp.toFixed(1) + " °C";
 
   let input = document.getElementById("limitInput");
   if(document.activeElement !== input){
     input.value = limit;
   }
+
+  const yellowTh = Number(d.yellowThreshold ?? limit * 0.70);
+  const orangeTh = Number(d.orangeThreshold ?? limit * 0.85);
+  const redTh = Number(d.redThreshold ?? limit);
 
   document.getElementById("greenTh").innerHTML = yellowTh.toFixed(1);
   document.getElementById("yellowTh").innerHTML = yellowTh.toFixed(1);
