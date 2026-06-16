@@ -515,9 +515,10 @@ button:active{
 
   <div class="thresholds">
     <b>Alarm Levels:</b><br>
-    🟡 Yellow 70%: <span id="yellowTh">--</span> °C<br>
-    🟠 Orange 85%: <span id="orangeTh">--</span> °C<br>
-    🔴 Red 100%: <span id="redTh">--</span> °C
+    🟢 Green Normal: أقل من <span id="greenTh">--</span> °C<br>
+    🟡 Yellow 70%: من <span id="yellowTh">--</span> °C<br>
+    🟠 Orange 85%: من <span id="orangeTh">--</span> °C<br>
+    🔴 Red 100%: من <span id="redTh">--</span> °C
   </div>
 </div>
 
@@ -647,6 +648,10 @@ onValue(ref(db, "motor"), (snapshot) => {
   const level = d.alarmLevel || d.tempAlarmLevel || "NORMAL";
   const message = d.alarmMessage || "System normal";
 
+  const yellowTh = Number(d.yellowThreshold ?? limit * 0.70);
+  const orangeTh = Number(d.orangeThreshold ?? limit * 0.85);
+  const redTh = Number(d.redThreshold ?? limit);
+
   document.getElementById("temp").innerHTML = temp.toFixed(1) + " °C";
 
   let input = document.getElementById("limitInput");
@@ -654,9 +659,10 @@ onValue(ref(db, "motor"), (snapshot) => {
     input.value = limit;
   }
 
-  document.getElementById("yellowTh").innerHTML = Number(d.yellowThreshold ?? limit * 0.70).toFixed(1);
-  document.getElementById("orangeTh").innerHTML = Number(d.orangeThreshold ?? limit * 0.85).toFixed(1);
-  document.getElementById("redTh").innerHTML = Number(d.redThreshold ?? limit).toFixed(1);
+  document.getElementById("greenTh").innerHTML = yellowTh.toFixed(1);
+  document.getElementById("yellowTh").innerHTML = yellowTh.toFixed(1);
+  document.getElementById("orangeTh").innerHTML = orangeTh.toFixed(1);
+  document.getElementById("redTh").innerHTML = redTh.toFixed(1);
 
   document.getElementById("fanFront").className =
     motor ? "fanOverlay frontFan spinFan" : "fanOverlay frontFan offFan";
