@@ -702,8 +702,43 @@ onValue(ref(db, "motor/events"), (snapshot) => {
     return;
   }
 
-  const arr = Object.values(events).sort((a,b)=>{
-    return Number(b.timestamp || 0) - Number(a.timestamp || 0);
+  function getEventTime(e){
+    if(e.timestamp && Number(e.timestamp) > 0){
+      return Number(e.timestamp);
+    }
+
+    if(e.date && e.time){
+      let dateText = String(e.date);
+      let timeText = String(e.time);
+
+      let t1 = Date.parse(dateText + " " + timeText);
+      if(!isNaN(t1)) return t1;
+
+      let parts = dateText.split("/");
+      if(parts.length === 3){
+        let fixedDate = parts[2] + "-" + parts[1] + "-" + parts[0];
+        let t2 = Date.parse(fixedDate + " " + timeText);
+        if(!isNaN(t2)) return t2;
+      }
+    }
+
+    return 0;
+  }
+
+  const arr = Object.entries(events).map(([key, value]) => {
+    return {
+      key: key,
+      ...value
+    };
+  }).sort((a,b) => {
+    let ta = getEventTime(a);
+    let tb = getEventTime(b);
+
+    if(tb !== ta){
+      return tb - ta;
+    }
+
+    return b.key.localeCompare(a.key);
   });
 
   counter.innerHTML = "Total Events: " + arr.length;
