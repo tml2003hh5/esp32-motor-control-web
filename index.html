@@ -38,6 +38,30 @@ body{
   margin-bottom:0;
 }
 
+.projectTitle{
+  font-size:36px;
+  font-weight:900;
+  letter-spacing:2px;
+  color:#082f49;
+  margin:8px 0 0;
+}
+
+.projectSub{
+  font-size:18px;
+  color:#0284c7;
+  letter-spacing:4px;
+  font-weight:bold;
+  margin-top:4px;
+}
+
+.slogan{
+  font-size:14px;
+  color:#475569;
+  margin-top:12px;
+  letter-spacing:2px;
+  font-weight:bold;
+}
+
 .card{
   margin:16px 10px;
   padding:22px;
@@ -306,6 +330,7 @@ button:active{
 }
 
 @media(max-width:450px){
+
   .container{max-width:100%;padding:6px;}
 
   .header{
@@ -318,6 +343,24 @@ button:active{
     width:230px;
     max-width:90%;
     margin-bottom:0;
+  }
+
+  .projectTitle{
+    font-size:26px;
+    margin:2px 0 0;
+    letter-spacing:1px;
+  }
+
+  .projectSub{
+    font-size:12px;
+    letter-spacing:3px;
+    margin-top:2px;
+  }
+
+  .slogan{
+    font-size:11px;
+    margin-top:6px;
+    letter-spacing:1px;
   }
 
   .card{
@@ -597,16 +640,14 @@ onValue(ref(db, "motor"), (snapshot) => {
   const temp = Number(d.temperature ?? 0);
   const limit = Number(d.limit ?? 70);
 
-  const emergency = Boolean(d.finalEmergency || d.emergencyState || d.plcEmergencyActive);
-
   /*
     تعديل مهم:
-    حالة المحرك في الصفحة تعتمد فقط على plcMotorRunning
-    لأنه هو الراجع الحقيقي من PLC / GPIO32.
-    لا نعتمد على motorState أو finalRun حتى لا يظهر المحرك يعمل وهو متوقف فعليًا.
+    حالة المحرك في الصفحة تعتمد فقط على الراجع الحقيقي من PLC:
+    plcMotorRunning
   */
-  const motor = Boolean(d.plcMotorRunning) && !emergency;
+  const motor = Boolean(d.plcMotorRunning);
 
+  const emergency = Boolean(d.finalEmergency || d.emergencyState || d.plcEmergencyActive);
   const level = d.alarmLevel || d.tempAlarmLevel || "NORMAL";
   const message = d.alarmMessage || "System normal";
 
