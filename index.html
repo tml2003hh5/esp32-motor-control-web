@@ -641,9 +641,12 @@ onValue(ref(db, "motor"), (snapshot) => {
   const limit = Number(d.limit ?? 70);
 
   /*
-    تعديل مهم:
-    حالة المحرك في الصفحة تعتمد فقط على الراجع الحقيقي من PLC:
-    plcMotorRunning
+    التعديل الوحيد:
+    كان السطر القديم:
+    const motor = Boolean(d.finalRun || d.motorState || d.plcMotorRunning);
+
+    الآن حالة RUN في الصفحة تعتمد فقط على الراجع الحقيقي من PLC / GPIO32.
+    زر الطوارئ بقي كما كان ولم يتغير.
   */
   const motor = Boolean(d.plcMotorRunning);
 
