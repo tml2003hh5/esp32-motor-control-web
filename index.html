@@ -1,627 +1,767 @@
-#include <WiFi.h>
-#include <Firebase_ESP_Client.h>
-#include <OneWire.h>
-#include <DallasTemperature.h>
-#include <time.h>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-#include "addons/TokenHelper.h"
-#include "addons/RTDBHelper.h"
+<title>SIS Control | Smart Industrial Supervision</title>
+<link rel="icon" type="image/png" href="./sis_new_logo.png?v=1">
 
-// ================= WIFI =================
-#define WIFI_SSID "Tml"
-#define WIFI_PASSWORD "12345678"
-
-// ================= FIREBASE =================
-#define API_KEY "AIzaSyB7Xz_JyxOy0SuG7favkXvJM3sviwYjmKA"
-#define DATABASE_URL "https://esp32-motor-control-6bda0-default-rtdb.firebaseio.com/"
-
-FirebaseData fbdo;
-FirebaseAuth auth;
-FirebaseConfig config;
-
-// ================= PINS =================
-#define RELAY_START      26   // START
-#define RELAY_STOP       25   // STOP
-#define RELAY_RESET      14   // RESET
-#define RELAY_EMERGENCY  27   // EMERGENCY
-
-#define PLC_MOTOR_FB      32  // Feedback motor
-#define PLC_EMERGENCY_FB  33  // Feedback emergency
-
-#define DS18B20_PIN        4
-
-// ================= SENSOR =================
-OneWire oneWire(DS18B20_PIN);
-DallasTemperature sensors(&oneWire);
-
-// ================= RELAY LOGIC =================
-// إذا تستعمل كارت ريلاي Active LOW اتركها true
-// إذا تستعمل ترانزستور BC546 مباشر اجعلها false
-bool relayActiveLow = true;
-
-// ================= STATES =================
-float temperature = 0.0;
-float limitTemp = 70.0;
-
-bool motorState = false;
-bool plcMotorRunning = false;
-bool plcEmergencyActive = false;
-
-bool emergencyState = false;
-bool highTemperature = false;
-
-bool finalRun = false;
-bool finalEmergency = false;
-
-bool lastFinalRun = false;
-bool lastPlcEmergencyActive = false;
-
-String alarmLevel = "NORMAL";
-String tempAlarmLevel = "NORMAL";
-String alarmColor = "green";
-String alarmMessage = "System normal";
-
-// ================= STATISTICS =================
-unsigned long runStartMillis = 0;
-bool runTimerActive = false;
-
-unsigned long totalRunSeconds = 0;
-unsigned long todayRunSeconds = 0;
-String currentDay = "";
-
-int todayAlarmCount = 0;
-
-// ================= TIMERS =================
-unsigned long lastTempRead = 0;
-unsigned long lastFirebaseUpdate = 0;
-unsigned long lastCommandRead = 0;
-unsigned long lastLimitRead = 0;
-
-const unsigned long TEMP_INTERVAL = 1000;
-const unsigned long STATUS_INTERVAL = 500;
-const unsigned long COMMAND_INTERVAL = 200;
-const unsigned long LIMIT_INTERVAL = 1500;
-
-// ================= RELAY TOOLS =================
-void relayOn(int pin) {
-  digitalWrite(pin, relayActiveLow ? LOW : HIGH);
+<style>
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:linear-gradient(135deg,#020617,#0f172a,#111827);
+  color:white;
+  text-align:center;
 }
 
-void relayOff(int pin) {
-  digitalWrite(pin, relayActiveLow ? HIGH : LOW);
+.container{
+  max-width:620px;
+  margin:auto;
+  padding:10px;
 }
 
-void pulseRelay(int pin, int durationMs = 500) {
-  relayOn(pin);
-  delay(durationMs);
-  relayOff(pin);
+.header{
+  margin:12px 10px;
+  padding:8px;
+  border-radius:22px;
+  background:linear-gradient(180deg,#ffffff,#f8fafc);
+  color:#0f172a;
+  box-shadow:0 0 18px #0009;
 }
 
-// ================= TIME TOOLS =================
-String twoDigits(int v) {
-  if (v < 10) return "0" + String(v);
-  return String(v);
+.logo{
+  width:300px;
+  max-width:92%;
+  border-radius:14px;
+  margin-bottom:0;
 }
 
-String getDateNow() {
-  struct tm timeinfo;
-  if (!getLocalTime(&timeinfo)) return "0000-00-00";
-
-  return String(timeinfo.tm_year + 1900) + "-" +
-         twoDigits(timeinfo.tm_mon + 1) + "-" +
-         twoDigits(timeinfo.tm_mday);
+.projectTitle{
+  font-size:36px;
+  font-weight:900;
+  letter-spacing:2px;
+  color:#082f49;
+  margin:8px 0 0;
 }
 
-String getTimeNow() {
-  struct tm timeinfo;
-  if (!getLocalTime(&timeinfo)) return "00:00:00";
-
-  return twoDigits(timeinfo.tm_hour) + ":" +
-         twoDigits(timeinfo.tm_min) + ":" +
-         twoDigits(timeinfo.tm_sec);
+.projectSub{
+  font-size:18px;
+  color:#0284c7;
+  letter-spacing:4px;
+  font-weight:bold;
+  margin-top:4px;
 }
 
-unsigned long getTimestamp() {
-  time_t now;
-  time(&now);
+.slogan{
+  font-size:14px;
+  color:#475569;
+  margin-top:12px;
+  letter-spacing:2px;
+  font-weight:bold;
+}
 
-  if (now > 100000) {
-    return (unsigned long)now * 1000;
+.card{
+  margin:16px 10px;
+  padding:22px;
+  border-radius:24px;
+  background:#1f2937;
+  box-shadow:0 0 18px #0009;
+  border:1px solid #334155;
+}
+
+.card h2{
+  color:#38bdf8;
+  letter-spacing:1px;
+}
+
+.temp{
+  font-size:64px;
+  font-weight:bold;
+  color:#38bdf8;
+}
+
+input{
+  padding:14px;
+  font-size:28px;
+  width:170px;
+  height:48px;
+  text-align:center;
+  border-radius:15px;
+  border:none;
+  font-weight:bold;
+}
+
+button{
+  width:145px;
+  height:62px;
+  margin:9px;
+  border:none;
+  border-radius:18px;
+  font-size:22px;
+  font-weight:bold;
+  color:white;
+  box-shadow:0 5px 12px #0007;
+}
+
+button:active{
+  transform:scale(.96);
+}
+
+.start{background:#22c55e;}
+.stop{background:#ef4444;}
+.reset{background:#3b82f6;}
+.emergency{background:#7f1d1d;}
+.setbtn{background:#a855f7;height:72px;}
+
+.alert{
+  display:none;
+  margin-top:15px;
+  padding:18px;
+  border-radius:18px;
+  font-size:23px;
+  font-weight:bold;
+  border:3px solid;
+}
+
+.alertYellow{
+  background:#713f12;
+  border-color:#facc15;
+  color:#fef9c3;
+}
+
+.alertOrange{
+  background:#7c2d12;
+  border-color:#fb923c;
+  color:#ffedd5;
+}
+
+.alertRed{
+  background:#7f1d1d;
+  border-color:#ef4444;
+  color:white;
+}
+
+.warnIcon{
+  display:none;
+  font-size:60px;
+  margin-top:12px;
+  animation:blink .6s infinite;
+}
+
+@keyframes blink{
+  0%{opacity:1;transform:scale(1);}
+  50%{opacity:.15;transform:scale(1.25);}
+  100%{opacity:1;transform:scale(1);}
+}
+
+.monitor{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:12px;
+  background:#000;
+  border:2px solid #222;
+  border-radius:18px;
+  padding:15px;
+  margin:10px auto;
+  width:fit-content;
+}
+
+.motorBox{
+  position:relative;
+  width:165px;
+  height:165px;
+  background:#000;
+  border-radius:14px;
+  overflow:hidden;
+}
+
+.motorImg{
+  width:100%;
+  height:145px;
+  display:block;
+  border-radius:10px;
+  object-fit:contain;
+}
+
+.fanOverlay{
+  position:absolute;
+  width:52px;
+  height:52px;
+  border-radius:50%;
+  pointer-events:none;
+}
+
+.frontFan{left:56px;top:61px;}
+
+.blade{
+  position:absolute;
+  width:10px;
+  height:28px;
+  background:white;
+  border-radius:20px;
+  left:21px;
+  top:1px;
+  transform-origin:5px 25px;
+  opacity:.95;
+}
+
+.b1{transform:rotate(0deg);}
+.b2{transform:rotate(120deg);}
+.b3{transform:rotate(240deg);}
+
+.center{
+  position:absolute;
+  width:16px;
+  height:16px;
+  background:#c9a45c;
+  border-radius:50%;
+  left:18px;
+  top:18px;
+  box-shadow:0 0 5px #000;
+}
+
+.spinFan{animation:rot .20s linear infinite;}
+.offFan{filter:grayscale(1);opacity:.45;}
+
+@keyframes rot{
+  from{transform:rotate(0deg);}
+  to{transform:rotate(360deg);}
+}
+
+.lampPanel{
+  display:grid;
+  grid-template-columns:1fr 48px;
+  gap:14px;
+  max-width:360px;
+  margin:22px auto 0;
+  font-size:22px;
+  align-items:center;
+  text-align:left;
+}
+
+.lamp{
+  width:32px;
+  height:32px;
+  border-radius:50%;
+  margin:auto;
+  background:#4b5563;
+  box-shadow:inset 0 0 8px #000;
+  border:2px solid #111827;
+}
+
+.green{background:#22c55e;box-shadow:0 0 18px #22c55e;}
+.yellow{background:#facc15;box-shadow:0 0 18px #facc15;}
+.orange{background:#f97316;box-shadow:0 0 18px #f97316;}
+.red{background:#ef4444;box-shadow:0 0 18px #ef4444;}
+
+.statsGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:14px;
+}
+
+.statItem{
+  background:#111827;
+  border:1px solid #334155;
+  border-radius:14px;
+  padding:12px;
+  font-size:15px;
+}
+
+.statValue{
+  color:#38bdf8;
+  font-size:20px;
+  font-weight:bold;
+  margin-top:5px;
+}
+
+.thresholds{
+  margin-top:14px;
+  background:#111827;
+  border-radius:14px;
+  padding:12px;
+  text-align:left;
+  font-size:15px;
+  line-height:1.7;
+}
+
+.logBox{
+  text-align:left;
+  max-height:330px;
+  overflow:auto;
+  background:#111827;
+  border-radius:14px;
+  padding:10px;
+}
+
+.logItem{
+  padding:10px;
+  border-bottom:1px solid #374151;
+  font-size:15px;
+  line-height:1.5;
+}
+
+.logType{
+  font-weight:bold;
+  font-size:17px;
+}
+
+.logInfo{color:#38bdf8;}
+.logYellow{color:#facc15;}
+.logOrange{color:#fb923c;}
+.logRed{color:#ef4444;}
+
+.clearBtn{
+  background:#6b7280;
+  width:180px;
+  height:48px;
+  font-size:18px;
+}
+
+.footer{
+  margin:20px 0 10px;
+  color:#94a3b8;
+  font-size:13px;
+  letter-spacing:1px;
+}
+
+@media(max-width:450px){
+
+  .container{max-width:100%;padding:6px;}
+
+  .header{
+    margin:6px 6px;
+    padding:6px;
+    border-radius:18px;
   }
 
-  return millis();
-}
-
-String formatDuration(unsigned long sec) {
-  unsigned long h = sec / 3600;
-  unsigned long m = (sec % 3600) / 60;
-  unsigned long s = sec % 60;
-
-  return twoDigits(h) + ":" + twoDigits(m) + ":" + twoDigits(s);
-}
-
-// ================= DAILY RESET =================
-void checkDailyReset() {
-  String today = getDateNow();
-
-  if (today == "0000-00-00") return;
-
-  if (currentDay == "") {
-    currentDay = today;
+  .logo{
+    width:230px;
+    max-width:90%;
+    margin-bottom:0;
   }
 
-  if (today != currentDay) {
-    todayRunSeconds = 0;
-    todayAlarmCount = 0;
-    currentDay = today;
+  .projectTitle{
+    font-size:26px;
+    margin:2px 0 0;
+    letter-spacing:1px;
+  }
 
-    Firebase.RTDB.setInt(&fbdo, "/motor/statistics/todayRunSeconds", todayRunSeconds);
-    Firebase.RTDB.setInt(&fbdo, "/motor/statistics/todayAlarmCount", todayAlarmCount);
-    Firebase.RTDB.setString(&fbdo, "/motor/statistics/currentDay", currentDay);
+  .projectSub{
+    font-size:12px;
+    letter-spacing:3px;
+    margin-top:2px;
+  }
+
+  .slogan{
+    font-size:11px;
+    margin-top:6px;
+    letter-spacing:1px;
+  }
+
+  .card{
+    margin:9px 6px;
+    padding:14px;
+    border-radius:20px;
+  }
+
+  .card h2{
+    margin:4px 0 12px;
+    font-size:23px;
+  }
+
+  .temp{font-size:52px;}
+
+  input{
+    width:120px;
+    height:42px;
+    font-size:24px;
+    padding:10px;
+  }
+
+  .setbtn{
+    width:120px;
+    height:62px;
+    font-size:20px;
+  }
+
+  button{
+    width:128px;
+    height:54px;
+    margin:6px;
+    font-size:19px;
+    border-radius:15px;
+  }
+
+  .monitor{
+    gap:6px;
+    padding:8px;
+    margin:6px auto;
+  }
+
+  .motorBox{
+    width:135px;
+    height:135px;
+  }
+
+  .motorImg{height:120px;}
+
+  .frontFan{
+    left:46px;
+    top:55px;
+    width:44px;
+    height:44px;
+  }
+
+  .blade{
+    width:8px;
+    height:24px;
+    left:18px;
+    top:1px;
+    transform-origin:4px 21px;
+  }
+
+  .center{
+    width:14px;
+    height:14px;
+    left:15px;
+    top:15px;
+  }
+
+  .lampPanel{
+    margin:14px auto 0;
+    font-size:18px;
+    gap:9px;
+    max-width:310px;
+  }
+
+  .lamp{
+    width:26px;
+    height:26px;
+  }
+
+  .alert{
+    padding:12px;
+    font-size:19px;
+    margin-top:10px;
+  }
+
+  .warnIcon{
+    font-size:42px;
+    margin-top:5px;
+  }
+
+  .statsGrid{
+    grid-template-columns:1fr 1fr;
+    gap:7px;
+  }
+
+  .statItem{
+    padding:9px;
+    font-size:13px;
+  }
+
+  .statValue{
+    font-size:16px;
+  }
+
+  .logBox{max-height:240px;}
+
+  .logItem{
+    font-size:13px;
+    padding:8px;
+  }
+
+  .clearBtn{
+    width:150px;
+    height:44px;
+    font-size:16px;
+  }
+
+  .footer{
+    margin:10px 0 5px;
+    font-size:11px;
   }
 }
+</style>
+</head>
 
-// ================= EVENTS =================
-void saveEvent(String type, String level, String source, String reason, unsigned long durationSec = 0) {
-  FirebaseJson json;
+<body>
 
-  json.set("type", type);
-  json.set("level", level);
-  json.set("source", source);
-  json.set("reason", reason);
-  json.set("date", getDateNow());
-  json.set("time", getTimeNow());
-  json.set("timestamp", getTimestamp());
-  json.set("temperature", temperature);
-  json.set("limit", limitTemp);
-  json.set("durationSec", durationSec);
-  json.set("durationText", formatDuration(durationSec));
+<div class="container">
 
-  Firebase.RTDB.pushJSON(&fbdo, "/motor/events", &json);
-}
+<div class="header">
+  <img class="logo" src="./sis_new_logo.png?v=1" alt="SIS Smart Industrial Supervision Logo">
+</div>
 
-// ================= READINGS =================
-void readTemperature() {
-  sensors.requestTemperatures();
-  float t = sensors.getTempCByIndex(0);
+<div class="card">
+  <div>Temperature</div>
+  <div id="temp" class="temp">-- °C</div>
+  <br>
 
-  if (t > -100 && t < 150) {
-    temperature = t;
+  <span>Max Temp:</span><br><br>
+  <input id="limitInput" type="number" step="1">
+  <button class="setbtn" onclick="setLimit()">SET</button>
+
+  <div id="alertBox" class="alert">SYSTEM NORMAL</div>
+  <div id="warnIcon" class="warnIcon">⚠️</div>
+
+  <div class="thresholds">
+    <b>Alarm Levels:</b><br>
+    🟢 Green Normal: Less than <span id="greenTh">--</span> °C<br>
+    🟡 Yellow 70%: <span id="yellowTh">--</span> °C<br>
+    🟠 Orange 85%: <span id="orangeTh">--</span> °C<br>
+    🔴 Red 100%: <span id="redTh">--</span> °C
+  </div>
+</div>
+
+<div class="card">
+  <h2>MONITORING</h2>
+
+  <div class="monitor">
+    <div class="motorBox">
+      <img class="motorImg" src="./motor_front.jpg">
+
+      <div id="fanFront" class="fanOverlay frontFan offFan">
+        <div class="blade b1"></div>
+        <div class="blade b2"></div>
+        <div class="blade b3"></div>
+        <div class="center"></div>
+      </div>
+    </div>
+
+    <div class="motorBox">
+      <img class="motorImg" src="./motor_side.png">
+    </div>
+  </div>
+
+  <div class="lampPanel">
+    <div>RUN</div><div id="runLamp" class="lamp"></div>
+    <div>EMERGENCY</div><div id="emgLamp" class="lamp"></div>
+    <div>ALARM LEVEL</div><div id="alarmLamp" class="lamp"></div>
+  </div>
+
+  <div class="statsGrid">
+    <div class="statItem">Current Run<div id="currentRun" class="statValue">--</div></div>
+    <div class="statItem">Today Run<div id="todayRun" class="statValue">--</div></div>
+    <div class="statItem">Total Run<div id="totalRun" class="statValue">--</div></div>
+    <div class="statItem">Today Alarms<div id="todayAlarms" class="statValue">--</div></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>CONTROL</h2>
+  <button class="start" onclick="sendCommand('start')">START</button>
+  <button class="stop" onclick="sendCommand('stop')">STOP</button>
+  <button class="reset" onclick="sendCommand('reset')">RESET</button>
+  <button class="emergency" onclick="sendCommand('emergency')">EMERGENCY</button>
+</div>
+
+<div class="card">
+  <h2>Events Register</h2>
+  <div id="logCounter">Total Events: 0</div><br>
+  <div id="logBox" class="logBox">Loading...</div>
+  <br>
+  <button class="clearBtn" onclick="clearEvents()">CLEAR EVENTS</button>
+</div>
+
+<div class="footer">
+  SIS Control © Smart Industrial Supervision
+</div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB7Xz_JyxOy0SuG7favkXvJM3sviwYjmKA",
+  authDomain: "esp32-motor-control-6bda0.firebaseapp.com",
+  databaseURL: "https://esp32-motor-control-6bda0-default-rtdb.firebaseio.com",
+  projectId: "esp32-motor-control-6bda0",
+  storageBucket: "esp32-motor-control-6bda0.firebasestorage.app",
+  messagingSenderId: "539136431573",
+  appId: "1:539136431573:web:e8b4adbe0993b88062995c"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+window.sendCommand = function(cmd){
+  set(ref(db, "motor/command"), cmd);
+};
+
+window.setLimit = function(){
+  let v = Number(document.getElementById("limitInput").value);
+
+  if(v > 0 && v < 150){
+    set(ref(db, "motor/limit"), v);
+  }else{
+    alert("Enter temperature between 1 and 149");
   }
+};
+
+window.clearEvents = function(){
+  if(confirm("Delete all events?")){
+    remove(ref(db, "motor/events"));
+  }
+};
+
+function alarmLampClass(level){
+  if(level === "RED") return "lamp red";
+  if(level === "ORANGE") return "lamp orange";
+  if(level === "YELLOW") return "lamp yellow";
+  return "lamp green";
 }
 
-void readLimitFromFirebase() {
-  if (Firebase.RTDB.getFloat(&fbdo, "/motor/limit")) {
-    float v = fbdo.floatData();
-    if (v > 0 && v < 150) {
-      limitTemp = v;
+function alertClass(level){
+  if(level === "RED") return "alert alertRed";
+  if(level === "ORANGE") return "alert alertOrange";
+  if(level === "YELLOW") return "alert alertYellow";
+  return "alert";
+}
+
+function logClass(level){
+  if(level === "RED") return "logType logRed";
+  if(level === "ORANGE") return "logType logOrange";
+  if(level === "YELLOW") return "logType logYellow";
+  return "logType logInfo";
+}
+
+onValue(ref(db, "motor"), (snapshot) => {
+  const d = snapshot.val();
+  if(!d) return;
+
+  const temp = Number(d.temperature ?? 0);
+  const limit = Number(d.limit ?? 70);
+
+  // التعديل الوحيد:
+  // حالة RUN تعتمد فقط على feedback الحقيقي من PLC عبر GPIO32
+  const motor = Boolean(d.plcMotorRunning);
+
+  const emergency = Boolean(d.finalEmergency || d.emergencyState || d.plcEmergencyActive);
+  const level = d.alarmLevel || d.tempAlarmLevel || "NORMAL";
+  const message = d.alarmMessage || "System normal";
+
+  document.getElementById("temp").innerHTML = temp.toFixed(1) + " °C";
+
+  let input = document.getElementById("limitInput");
+  if(document.activeElement !== input){
+    input.value = limit;
+  }
+
+  document.getElementById("greenTh").innerHTML = Number(d.yellowThreshold ?? limit * 0.70).toFixed(1);
+  document.getElementById("yellowTh").innerHTML = Number(d.yellowThreshold ?? limit * 0.70).toFixed(1);
+  document.getElementById("orangeTh").innerHTML = Number(d.orangeThreshold ?? limit * 0.85).toFixed(1);
+  document.getElementById("redTh").innerHTML = Number(d.redThreshold ?? limit).toFixed(1);
+
+  document.getElementById("fanFront").className =
+    motor ? "fanOverlay frontFan spinFan" : "fanOverlay frontFan offFan";
+
+  document.getElementById("runLamp").className =
+    motor ? "lamp green" : "lamp";
+
+  document.getElementById("emgLamp").className =
+    emergency ? "lamp red" : "lamp";
+
+  document.getElementById("alarmLamp").className =
+    alarmLampClass(level);
+
+  const alertBox = document.getElementById("alertBox");
+
+  if(level === "NORMAL"){
+    alertBox.style.display = "none";
+    document.getElementById("warnIcon").style.display = "none";
+  }else{
+    alertBox.style.display = "block";
+    alertBox.className = alertClass(level);
+    alertBox.innerHTML = level + " - " + message;
+    document.getElementById("warnIcon").style.display = "block";
+  }
+
+  const stats = d.statistics || {};
+  document.getElementById("currentRun").innerHTML = stats.currentRunTime || "00:00:00";
+  document.getElementById("todayRun").innerHTML = stats.todayRunTime || "00:00:00";
+  document.getElementById("totalRun").innerHTML = stats.totalRunTime || "00:00:00";
+  document.getElementById("todayAlarms").innerHTML = stats.todayAlarmCount ?? 0;
+});
+
+onValue(ref(db, "motor/events"), (snapshot) => {
+  const events = snapshot.val();
+  const box = document.getElementById("logBox");
+  const counter = document.getElementById("logCounter");
+
+  if(!events){
+    counter.innerHTML = "Total Events: 0";
+    box.innerHTML = "No events recorded.";
+    return;
+  }
+
+  function getEventTime(e){
+    if(e.timestamp && Number(e.timestamp) > 0){
+      return Number(e.timestamp);
     }
-  }
-}
 
-void readPLCFeedback() {
-  // GPIO32 LOW = motor running
-  plcMotorRunning = (digitalRead(PLC_MOTOR_FB) == LOW);
+    if(e.date && e.time){
+      let dateText = String(e.date);
+      let timeText = String(e.time);
 
-  // GPIO33 LOW = emergency active
-  plcEmergencyActive = (digitalRead(PLC_EMERGENCY_FB) == LOW);
-}
+      let t1 = Date.parse(dateText + " " + timeText);
+      if(!isNaN(t1)) return t1;
 
-// ================= ALARM =================
-void calculateAlarmLevel() {
-  float yellowLimit = limitTemp * 0.70;
-  float orangeLimit = limitTemp * 0.85;
-
-  if (temperature >= limitTemp) {
-    tempAlarmLevel = "RED";
-  }
-  else if (temperature >= orangeLimit) {
-    tempAlarmLevel = "ORANGE";
-  }
-  else if (temperature >= yellowLimit) {
-    tempAlarmLevel = "YELLOW";
-  }
-  else {
-    tempAlarmLevel = "NORMAL";
-  }
-
-  if (emergencyState || plcEmergencyActive || highTemperature) {
-    alarmLevel = "RED";
-    alarmColor = "red";
-
-    if (plcEmergencyActive) {
-      alarmMessage = "PLC/HMI emergency active";
-    }
-    else if (highTemperature) {
-      alarmMessage = "High temperature emergency";
-    }
-    else {
-      alarmMessage = "Emergency active";
-    }
-  }
-  else {
-    alarmLevel = tempAlarmLevel;
-
-    if (alarmLevel == "YELLOW") {
-      alarmColor = "yellow";
-      alarmMessage = "Temperature warning level";
-    }
-    else if (alarmLevel == "ORANGE") {
-      alarmColor = "orange";
-      alarmMessage = "Temperature danger level";
-    }
-    else if (alarmLevel == "RED") {
-      alarmColor = "red";
-      alarmMessage = "Temperature reached maximum limit";
-    }
-    else {
-      alarmColor = "green";
-      alarmMessage = "System normal";
-    }
-  }
-
-  finalEmergency = (emergencyState || plcEmergencyActive || highTemperature);
-
-  // الحالة النهائية للمحرك تعتمد على feedback من PLC
-  finalRun = plcMotorRunning && !finalEmergency;
-}
-
-// ================= EMERGENCY SYNC =================
-void syncEmergencyWithGPIO33() {
-  if (plcEmergencyActive == true) {
-    if (lastPlcEmergencyActive == false) {
-      saveEvent("PLC_EMERGENCY_ACTIVE", "RED", "GPIO33", "GPIO33 LOW - Emergency feedback active", 0);
-      todayAlarmCount++;
-    }
-
-    emergencyState = true;
-  }
-
-  if (plcEmergencyActive == false) {
-    if (emergencyState == true || finalEmergency == true) {
-      if (temperature < limitTemp) {
-        emergencyState = false;
-        finalEmergency = false;
-        highTemperature = false;
-
-        Firebase.RTDB.setBool(&fbdo, "/motor/emergencyState", false);
-        Firebase.RTDB.setBool(&fbdo, "/motor/finalEmergency", false);
-        Firebase.RTDB.setBool(&fbdo, "/motor/highTemperature", false);
-        Firebase.RTDB.setBool(&fbdo, "/motor/plcEmergencyActive", false);
-
-        Firebase.RTDB.setString(&fbdo, "/motor/alarmLevel", "NORMAL");
-        Firebase.RTDB.setString(&fbdo, "/motor/tempAlarmLevel", "NORMAL");
-        Firebase.RTDB.setString(&fbdo, "/motor/alarmColor", "green");
-        Firebase.RTDB.setString(&fbdo, "/motor/alarmMessage", "System normal");
-
-        Firebase.RTDB.setString(&fbdo, "/motor/command", "none");
-
-        if (lastPlcEmergencyActive == true) {
-          saveEvent("EMERGENCY_CLEARED", "INFO", "GPIO33", "GPIO33 HIGH - Emergency feedback released", 0);
-        }
-
-        Serial.println("Emergency cleared: GPIO33 is HIGH");
+      let parts = dateText.split("/");
+      if(parts.length === 3){
+        let fixedDate = parts[2] + "-" + parts[1] + "-" + parts[0];
+        let t2 = Date.parse(fixedDate + " " + timeText);
+        if(!isNaN(t2)) return t2;
       }
     }
+
+    return 0;
   }
 
-  lastPlcEmergencyActive = plcEmergencyActive;
-}
+  const arr = Object.entries(events).map(([key, value]) => {
+    return {
+      key: key,
+      ...value
+    };
+  }).sort((a,b) => {
+    let ta = getEventTime(a);
+    let tb = getEventTime(b);
 
-void checkTemperatureAlarm() {
-  if (temperature >= limitTemp) {
-    highTemperature = true;
-
-    if (emergencyState == false) {
-      emergencyState = true;
-      motorState = false;
-
-      // الحرارة العالية ترسل طوارئ فقط على GPIO27
-      pulseRelay(RELAY_EMERGENCY, 500);
-
-      todayAlarmCount++;
-      saveEvent("ALARM_RED", "RED", "DS18B20", "High temperature reached maximum limit", 0);
+    if(tb !== ta){
+      return tb - ta;
     }
-  }
-  else {
-    if (plcEmergencyActive == false && emergencyState == false) {
-      highTemperature = false;
-    }
-  }
-}
 
-// ================= MOTOR CONTROL =================
-void startMotor() {
-  if (temperature >= limitTemp) {
-    saveEvent("START_BLOCKED", "RED", "WEB", "Start blocked because temperature is high", 0);
-    return;
-  }
-
-  if (emergencyState || plcEmergencyActive || highTemperature) {
-    saveEvent("START_BLOCKED", "RED", "WEB", "Start blocked because emergency is active", 0);
-    return;
-  }
-
-  // START عبر GPIO26
-  pulseRelay(RELAY_START, 500);
-
-  motorState = true;
-
-  saveEvent("MOTOR_START_COMMAND", "INFO", "WEB", "Start command sent to GPIO26", 0);
-}
-
-void stopMotor() {
-  // STOP عبر GPIO25
-  pulseRelay(RELAY_STOP, 500);
-
-  motorState = false;
-
-  saveEvent("MOTOR_STOP_COMMAND", "INFO", "WEB", "Stop command sent to GPIO25", 0);
-}
-
-void resetSystem() {
-  // RESET عبر GPIO14
-  pulseRelay(RELAY_RESET, 500);
-
-  readPLCFeedback();
-
-  if (temperature < limitTemp && plcEmergencyActive == false) {
-    emergencyState = false;
-    highTemperature = false;
-    finalEmergency = false;
-
-    Firebase.RTDB.setBool(&fbdo, "/motor/emergencyState", false);
-    Firebase.RTDB.setBool(&fbdo, "/motor/finalEmergency", false);
-    Firebase.RTDB.setBool(&fbdo, "/motor/highTemperature", false);
-    Firebase.RTDB.setBool(&fbdo, "/motor/plcEmergencyActive", false);
-
-    Firebase.RTDB.setString(&fbdo, "/motor/alarmLevel", "NORMAL");
-    Firebase.RTDB.setString(&fbdo, "/motor/tempAlarmLevel", "NORMAL");
-    Firebase.RTDB.setString(&fbdo, "/motor/alarmColor", "green");
-    Firebase.RTDB.setString(&fbdo, "/motor/alarmMessage", "System normal");
-
-    saveEvent("RESET", "INFO", "WEB", "Reset command sent to GPIO14", 0);
-  }
-  else {
-    saveEvent("RESET_BLOCKED", "RED", "WEB", "Reset blocked: temperature high or GPIO33 still LOW", 0);
-  }
-}
-
-void emergencyStop(String source, String reason) {
-  // EMERGENCY عبر GPIO27 فقط
-  // لا نرسل STOP على GPIO25
-  pulseRelay(RELAY_EMERGENCY, 500);
-
-  motorState = false;
-  emergencyState = true;
-
-  todayAlarmCount++;
-
-  saveEvent("EMERGENCY", "RED", source, reason + " - command sent to GPIO27", 0);
-}
-
-// ================= COMMANDS =================
-void readCommand() {
-  if (!Firebase.RTDB.getString(&fbdo, "/motor/command")) {
-    return;
-  }
-
-  String cmd = fbdo.stringData();
-
-  if (cmd == "none" || cmd == "") {
-    return;
-  }
-
-  if (cmd == "start") {
-    startMotor();
-  }
-  else if (cmd == "stop") {
-    stopMotor();
-  }
-  else if (cmd == "reset") {
-    resetSystem();
-  }
-  else if (cmd == "emergency") {
-    emergencyStop("WEB", "Emergency command from web page");
-  }
-
-  Firebase.RTDB.setString(&fbdo, "/motor/command", "none");
-}
-
-// ================= RUN TIME =================
-void checkRunChanges() {
-  if (finalRun && !lastFinalRun) {
-    runTimerActive = true;
-    runStartMillis = millis();
-
-    saveEvent("MOTOR_STARTED", "INFO", "SYSTEM", "Motor running feedback detected from GPIO32", 0);
-  }
-
-  if (!finalRun && lastFinalRun) {
-    if (runTimerActive) {
-      unsigned long duration = (millis() - runStartMillis) / 1000;
-
-      totalRunSeconds += duration;
-      todayRunSeconds += duration;
-
-      saveEvent("MOTOR_STOPPED", "INFO", "SYSTEM", "Motor stopped feedback detected", duration);
-
-      runTimerActive = false;
-    }
-  }
-
-  lastFinalRun = finalRun;
-}
-
-unsigned long getCurrentRunSeconds() {
-  if (runTimerActive && finalRun) {
-    return (millis() - runStartMillis) / 1000;
-  }
-
-  return 0;
-}
-
-// ================= FIREBASE STATUS =================
-void updateFirebaseStatus() {
-  float yellowLimit = limitTemp * 0.70;
-  float orangeLimit = limitTemp * 0.85;
-
-  Firebase.RTDB.setFloat(&fbdo, "/motor/temperature", temperature);
-  Firebase.RTDB.setFloat(&fbdo, "/motor/limit", limitTemp);
-
-  Firebase.RTDB.setBool(&fbdo, "/motor/motorState", motorState);
-  Firebase.RTDB.setBool(&fbdo, "/motor/plcMotorRunning", plcMotorRunning);
-  Firebase.RTDB.setBool(&fbdo, "/motor/finalRun", finalRun);
-
-  Firebase.RTDB.setBool(&fbdo, "/motor/emergencyState", emergencyState);
-  Firebase.RTDB.setBool(&fbdo, "/motor/plcEmergencyActive", plcEmergencyActive);
-  Firebase.RTDB.setBool(&fbdo, "/motor/highTemperature", highTemperature);
-  Firebase.RTDB.setBool(&fbdo, "/motor/finalEmergency", finalEmergency);
-
-  Firebase.RTDB.setString(&fbdo, "/motor/alarmLevel", alarmLevel);
-  Firebase.RTDB.setString(&fbdo, "/motor/tempAlarmLevel", tempAlarmLevel);
-  Firebase.RTDB.setString(&fbdo, "/motor/alarmColor", alarmColor);
-  Firebase.RTDB.setString(&fbdo, "/motor/alarmMessage", alarmMessage);
-
-  Firebase.RTDB.setFloat(&fbdo, "/motor/yellowThreshold", yellowLimit);
-  Firebase.RTDB.setFloat(&fbdo, "/motor/orangeThreshold", orangeLimit);
-  Firebase.RTDB.setFloat(&fbdo, "/motor/redThreshold", limitTemp);
-
-  unsigned long currentRun = getCurrentRunSeconds();
-
-  Firebase.RTDB.setInt(&fbdo, "/motor/statistics/currentRunSeconds", currentRun);
-  Firebase.RTDB.setInt(&fbdo, "/motor/statistics/todayRunSeconds", todayRunSeconds + currentRun);
-  Firebase.RTDB.setInt(&fbdo, "/motor/statistics/totalRunSeconds", totalRunSeconds + currentRun);
-
-  Firebase.RTDB.setString(&fbdo, "/motor/statistics/currentRunTime", formatDuration(currentRun));
-  Firebase.RTDB.setString(&fbdo, "/motor/statistics/todayRunTime", formatDuration(todayRunSeconds + currentRun));
-  Firebase.RTDB.setString(&fbdo, "/motor/statistics/totalRunTime", formatDuration(totalRunSeconds + currentRun));
-
-  Firebase.RTDB.setInt(&fbdo, "/motor/statistics/todayAlarmCount", todayAlarmCount);
-  Firebase.RTDB.setString(&fbdo, "/motor/statistics/currentDay", currentDay);
-}
-
-// ================= SETUP =================
-void setup() {
-  Serial.begin(115200);
-
-  pinMode(RELAY_START, OUTPUT);
-  pinMode(RELAY_STOP, OUTPUT);
-  pinMode(RELAY_RESET, OUTPUT);
-  pinMode(RELAY_EMERGENCY, OUTPUT);
-
-  relayOff(RELAY_START);
-  relayOff(RELAY_STOP);
-  relayOff(RELAY_RESET);
-  relayOff(RELAY_EMERGENCY);
-
-  pinMode(PLC_MOTOR_FB, INPUT_PULLUP);
-  pinMode(PLC_EMERGENCY_FB, INPUT_PULLUP);
-
-  sensors.begin();
-
-  Serial.println("SIS Control Starting...");
-  Serial.println("START     = GPIO26");
-  Serial.println("STOP      = GPIO25");
-  Serial.println("RESET     = GPIO14");
-  Serial.println("EMERGENCY = GPIO27");
-  Serial.println("GPIO32 LOW = Motor running");
-  Serial.println("GPIO33 LOW = Emergency active");
-
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-
-  Serial.print("Connecting WiFi");
-  while (WiFi.status() != WL_CONNECTED) {
-    Serial.print(".");
-    delay(400);
-  }
-
-  Serial.println();
-  Serial.println("WiFi connected");
-
-  configTime(3600, 0, "pool.ntp.org", "time.nist.gov");
-
-  config.api_key = API_KEY;
-  config.database_url = DATABASE_URL;
-
-  if (Firebase.signUp(&config, &auth, "", "")) {
-    Serial.println("Firebase signUp OK");
-  }
-  else {
-    Serial.printf("Firebase signUp FAILED: %s\n", config.signer.signupError.message.c_str());
-  }
-
-  config.token_status_callback = tokenStatusCallback;
-  Firebase.begin(&config, &auth);
-  Firebase.reconnectWiFi(true);
-
-  delay(1000);
-
-  readTemperature();
-  readLimitFromFirebase();
-  readPLCFeedback();
-  calculateAlarmLevel();
-  checkDailyReset();
-  updateFirebaseStatus();
-
-  saveEvent("SYSTEM_STARTED", "INFO", "ESP32", "System started", 0);
-}
-
-// ================= LOOP =================
-void loop() {
-  if (!Firebase.ready()) {
-    return;
-  }
-
-  unsigned long now = millis();
-
-  checkDailyReset();
-
-  if (now - lastTempRead >= TEMP_INTERVAL) {
-    lastTempRead = now;
-    readTemperature();
-  }
-
-  if (now - lastLimitRead >= LIMIT_INTERVAL) {
-    lastLimitRead = now;
-    readLimitFromFirebase();
-  }
-
-  readPLCFeedback();
-
-  syncEmergencyWithGPIO33();
-
-  checkTemperatureAlarm();
-
-  calculateAlarmLevel();
-
-  checkRunChanges();
-
-  if (now - lastCommandRead >= COMMAND_INTERVAL) {
-    lastCommandRead = now;
-    readCommand();
-  }
-
-  if (now - lastFirebaseUpdate >= STATUS_INTERVAL) {
-    lastFirebaseUpdate = now;
-    updateFirebaseStatus();
-  }
-
-  Serial.println("--------- SIS STATUS ---------");
-  Serial.print("Temp: "); Serial.println(temperature);
-  Serial.print("Limit: "); Serial.println(limitTemp);
-
-  Serial.print("GPIO32 Motor: ");
-  Serial.println(plcMotorRunning ? "LOW = RUNNING" : "HIGH = STOPPED");
-
-  Serial.print("GPIO33 Emergency: ");
-  Serial.println(plcEmergencyActive ? "LOW = ACTIVE" : "HIGH = NORMAL");
-
-  Serial.print("Final Run: "); Serial.println(finalRun);
-  Serial.print("Emergency State: "); Serial.println(emergencyState);
-  Serial.print("Final Emergency: "); Serial.println(finalEmergency);
-  Serial.print("Alarm Level: "); Serial.println(alarmLevel);
-  Serial.println("------------------------------");
-
-  delay(300);
-}
+    return b.key.localeCompare(a.key);
+  });
+
+  counter.innerHTML = "Total Events: " + arr.length;
+
+  box.innerHTML = arr.map(e => {
+    let duration = e.durationText || "--";
+    let level = e.level || "INFO";
+
+    return `
+      <div class="logItem">
+        <div class="${logClass(level)}">${e.type || "EVENT"} - ${level}</div>
+        Reason: ${e.reason || "--"}<br>
+        Source: ${e.source || "--"}<br>
+        Date: ${e.date || "--"}<br>
+        Time: ${e.time || "--"}<br>
+        Duration: ${duration}<br>
+        Temperature: ${e.temperature ?? "--"} °C<br>
+        Limit: ${e.limit ?? "--"} °C
+      </div>
+    `;
+  }).join("");
+});
+</script>
+
+</body>
+</html>
